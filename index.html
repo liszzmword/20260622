@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로또 추첨기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="utility-strip">
+    <span>동행복권 공개 데이터 기반 · 무작위 번호 생성 도구</span>
+  </div>
+
+  <header class="nav-bar-top">
+    <div class="nav-inner">
+      <a class="brand" href="#">Lotto<span>HP</span></a>
+      <nav class="nav-links" aria-label="페이지 섹션">
+        <a class="nav-link" href="#draw">번호 추첨</a>
+        <a class="nav-link" href="#lookup">당첨 조회</a>
+        <a class="nav-link" href="#history">추첨 기록</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero-band">
+    <div class="hero-wrap">
+      <span class="chevron chevron-left" aria-hidden="true"></span>
+      <div class="hero-promo-card">
+        <div class="hero-copy">
+          <p class="eyebrow">Lucky Number Generator</p>
+          <h1>로또 추첨기</h1>
+          <p class="subtitle">1부터 45까지 중복 없이 6개의 번호와 보너스 번호를 추첨합니다. 역대 1등 당첨 번호와 당첨금도 함께 확인할 수 있습니다.</p>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-ball yellow">7</div>
+          <div class="hero-ball blue">14</div>
+          <div class="hero-ball red">23</div>
+          <div class="hero-ball gray">31</div>
+          <div class="hero-ball green">42</div>
+          <div class="hero-ball bonus">+</div>
+        </div>
+      </div>
+      <span class="chevron chevron-right" aria-hidden="true"></span>
+    </div>
+  </section>
+
+  <main class="app">
+    <section class="section-band section-white" id="draw">
+      <div class="container">
+        <div class="section-heading">
+          <h2>번호 추첨</h2>
+          <p>세트 수를 선택한 뒤 추첨 버튼을 눌러 번호를 생성하세요.</p>
+        </div>
+
+        <article class="card-product draw-machine" aria-live="polite">
+          <div class="draw-studio" id="drawStudio">
+            <div class="draw-studio-header">
+              <span class="draw-live-badge" id="liveBadge">STANDBY</span>
+              <p class="draw-status" id="drawStatus">추첨을 시작하려면 아래 버튼을 눌러주세요.</p>
+              <p class="draw-progress" id="drawProgress" aria-hidden="true"></p>
+            </div>
+
+            <div class="draw-stage">
+              <div class="machine-column">
+                <div class="tumbler-unit">
+                  <p class="tumbler-label">주 번호 추첨기</p>
+                  <div class="tumbler" id="mainTumbler">
+                    <div class="tumbler-ring" aria-hidden="true"></div>
+                    <div class="tumbler-glass">
+                      <div class="tumbler-balls" id="tumblerBalls"></div>
+                    </div>
+                    <div class="tumbler-neck"></div>
+                  </div>
+                </div>
+
+                <div class="draw-tube-wrap">
+                  <div class="draw-tube" id="drawTube" aria-hidden="true">
+                    <div class="tube-track"></div>
+                    <div class="tube-ball hidden" id="tubeBall"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="reveal-board">
+                <div class="reveal-board-head">
+                  <span class="reveal-board-title">당첨번호</span>
+                  <span class="reveal-board-sub">Lotto 6/45</span>
+                </div>
+                <div class="balls-row" id="ballsRow">
+                  <div class="ball-slot" data-order="1"><span class="slot-label">1</span><span class="ball empty">?</span></div>
+                  <div class="ball-slot" data-order="2"><span class="slot-label">2</span><span class="ball empty">?</span></div>
+                  <div class="ball-slot" data-order="3"><span class="slot-label">3</span><span class="ball empty">?</span></div>
+                  <div class="ball-slot" data-order="4"><span class="slot-label">4</span><span class="ball empty">?</span></div>
+                  <div class="ball-slot" data-order="5"><span class="slot-label">5</span><span class="ball empty">?</span></div>
+                  <div class="ball-slot" data-order="6"><span class="slot-label">6</span><span class="ball empty">?</span></div>
+                </div>
+                <div class="bonus-section">
+                  <div class="bonus-divider" aria-hidden="true"></div>
+                  <div class="bonus-row">
+                    <span class="bonus-label">보너스</span>
+                    <div class="ball-slot bonus-slot" data-order="bonus">
+                      <span class="ball empty" id="bonusBall">?</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <label class="field">
+              <span class="field-label">추첨 세트</span>
+              <select id="setCount" class="text-input">
+                <option value="1">1세트</option>
+                <option value="3">3세트</option>
+                <option value="5" selected>5세트</option>
+                <option value="10">10세트</option>
+              </select>
+            </label>
+
+            <button type="button" class="btn-primary btn-draw" id="drawBtn">
+              추첨 시작
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section-band section-cloud lookup" id="lookup">
+      <div class="container">
+        <div class="section-heading">
+          <h2>역대 1등 번호 · 당첨금액 조회</h2>
+          <p>동행복권 공개 데이터를 바탕으로 회차별 당첨 번호와 1등 당첨금을 확인할 수 있습니다.</p>
+        </div>
+
+        <div class="lookup-controls">
+          <label class="field field-round">
+            <span class="field-label">회차</span>
+            <input type="number" id="roundInput" class="text-input" min="1" placeholder="예: 1229">
+          </label>
+          <button type="button" class="btn-primary" id="lookupBtn">조회</button>
+          <button type="button" class="btn-outline" id="latestBtn">최신 회차</button>
+          <div class="round-nav">
+            <button type="button" class="btn-outline-ink btn-nav" id="prevRoundBtn" aria-label="이전 회차">◀</button>
+            <button type="button" class="btn-outline-ink btn-nav" id="nextRoundBtn" aria-label="다음 회차">▶</button>
+          </div>
+        </div>
+
+        <div class="card-product lookup-result" id="lookupResult">
+          <p class="lookup-placeholder">회차를 입력하거나 최신 회차를 불러오세요.</p>
+        </div>
+
+        <div class="lookup-recent">
+          <h3 class="subsection-title">최근 당첨 내역</h3>
+          <ul class="recent-list" id="recentList">
+            <li class="lookup-loading">당첨 정보를 불러오는 중...</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-band section-white" id="history">
+      <div class="container">
+        <div class="section-heading section-heading-row">
+          <div>
+            <h2>추첨 기록</h2>
+            <p>이번 세션에서 생성한 번호 목록입니다.</p>
+          </div>
+          <button type="button" class="btn-outline-ink btn-clear" id="clearBtn">기록 지우기</button>
+        </div>
+
+        <ul class="history-list" id="historyList">
+          <li class="history-empty">아직 추첨한 번호가 없습니다.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer-dark">
+    <div class="footer-inner">
+      <p class="footer-title">로또 추첨기</p>
+      <p class="footer-copy">본 추첨기는 무작위 번호 생성 도구이며, 당첨을 보장하지 않습니다. 당첨 번호 데이터는 공개 API를 기반으로 제공됩니다.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script src="lotto-lookup.js"></script>
+</body>
+</html>
