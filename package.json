@@ -1,0 +1,10 @@
+{
+  "name": "lotto-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "로또 추첨기 + 사주 챗봇 + Supabase 저장",
+  "engines": {
+    "node": ">=18"
+  }
+}
