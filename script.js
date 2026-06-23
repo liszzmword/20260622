@@ -336,7 +336,7 @@ async function loadHistoryFromSupabase() {
     await window.LottoStorage.checkConnection();
     const rows = await window.LottoStorage.fetchDrawHistory();
     renderHistoryFromRows(rows);
-    setHistoryStatus(`Supabase 연결됨 · ${rows.length}건 저장됨`, "success");
+    setHistoryStatus(`Supabase 연결됨 (${status.keyType}) · ${rows.length}건`, "success");
   } catch (error) {
     historyList.innerHTML = `<li class="history-empty">${error.message}</li>`;
     setHistoryStatus(error.message, "error");

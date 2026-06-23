@@ -1,14 +1,15 @@
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_ANON_KEY;
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  const key = serviceRole || anonKey;
+  const keyType = serviceRole ? "service_role" : anonKey ? "anon" : null;
 
   if (!url || !key) {
     return null;
   }
 
-  return { url, key };
+  return { url, key, keyType };
 }
 
 function parseError(data, fallback) {
@@ -26,7 +27,7 @@ async function supabaseRequest(path, options = {}) {
 
   if (!config) {
     throw new Error(
-      "Supabase 환경 변수가 없습니다. SUPABASE_URL + SUPABASE_ANON_KEY(또는 SERVICE_ROLE_KEY)를 Vercel에 설정하세요."
+      "Supabase 환경 변수가 없습니다. Vercel에 SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY(권장) 또는 SUPABASE_ANON_KEY를 설정하세요."
     );
   }
 
