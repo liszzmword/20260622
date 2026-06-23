@@ -31,15 +31,37 @@ async function supabaseRequest(path, options = {}) {
     );
   }
 
-  const response = await fetch(`${config.url}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      apikey: config.key,
-      Authorization: `Bearer ${config.key}`,
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+  if (!/^https?:\/\//.test(config.url)) {
+    throw new Error(
+      `SUPABASE_URL 형식이 올바르지 않습니다. https://로 시작하는 프로젝트 URL이어야 합니다. (현재 값 시작: "${config.url.slice(0, 12)}...")`
+    );
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  let response;
+  try {
+    response = await fetch(`${config.url}/rest/v1/${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    });
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error(
+        "Supabase 응답 시간 초과(8초). SUPABASE_URL 값이 정확한지 확인하세요. (예: https://xxxx.supabase.co)"
+      );
+    }
+    throw new Error(`Supabase 연결 실패: ${err.message}`);
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const text = await response.text();
   let data = null;
@@ -53,7 +75,9 @@ async function supabaseRequest(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(parseError(data, "Supabase 요청에 실패했습니다."));
+    throw new Error(
+      parseError(data, `Supabase 요청 실패 (HTTP ${response.status})`)
+    );
   }
 
   return data;
@@ -140,6 +164,11 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ error: "Method not allowed" });
   } catch (error) {
-    return res.status(500).json({ error: error.message || "서버 오류가 발생했습니다." });
+    const message =
+      (error && (error.message || String(error))) || "알 수 없는 서버 오류";
+    return res.status(500).json({
+      error: message,
+      name: error?.name || null,
+    });
   }
 }
