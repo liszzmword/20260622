@@ -1,32 +1,55 @@
-export default function handler(_req, res) {
-  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
-  const serviceRole = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
-  const anonKey = Boolean(process.env.SUPABASE_ANON_KEY);
+const VERSION = "diag-v4";
 
-  if (!url) {
-    return res.status(503).json({
-      configured: false,
-      error: "SUPABASE_URL이 없습니다.",
-      missing: ["SUPABASE_URL"],
-      keyType: null,
-    });
+export default async function handler(_req, res) {
+  const rawUrl = process.env.SUPABASE_URL || "";
+  const url = rawUrl.replace(/\/$/, "");
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  const key = serviceRole || anonKey;
+  const keyType = serviceRole ? "service_role" : anonKey ? "anon" : null;
+
+  const result = {
+    version: VERSION,
+    configured: Boolean(url && key),
+    keyType,
+    urlStartsWith: url ? url.slice(0, 16) : null,
+    urlValidFormat: /^https?:\/\/.+\.supabase\.co$/.test(url),
+    dbTest: null,
+  };
+
+  if (!url || !key) {
+    result.error = "SUPABASE_URL 또는 키가 없습니다.";
+    return res.status(200).json(result);
   }
 
-  if (!serviceRole && !anonKey) {
-    return res.status(503).json({
-      configured: false,
-      error:
-        "Supabase API 키가 없습니다. SUPABASE_SERVICE_ROLE_KEY(권장) 또는 SUPABASE_ANON_KEY 중 하나를 Vercel에 추가하세요.",
-      missing: ["SUPABASE_SERVICE_ROLE_KEY 또는 SUPABASE_ANON_KEY"],
-      keyType: null,
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    const resp = await fetch(`${url}/rest/v1/lotto_draws?select=id&limit=1`, {
+      signal: controller.signal,
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Accept: "application/json",
+      },
     });
+
+    clearTimeout(timeout);
+
+    const text = await resp.text();
+    result.dbTest = {
+      httpStatus: resp.status,
+      ok: resp.ok,
+      body: text.slice(0, 400),
+    };
+  } catch (err) {
+    result.dbTest = {
+      httpStatus: null,
+      ok: false,
+      error: err?.name === "AbortError" ? "timeout(8s)" : err?.message || String(err),
+    };
   }
 
-  return res.status(200).json({
-    configured: true,
-    keyType: serviceRole ? "service_role" : "anon",
-    message: serviceRole
-      ? "서비스 롤 키로 서버 API 저장 (권장)"
-      : "anon 키로 저장 (schema.sql RLS·grant 필요)",
-  });
+  return res.status(200).json(result);
 }
