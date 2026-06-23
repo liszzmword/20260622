@@ -1067,6 +1067,33 @@ select.text-input {
   background: var(--cloud);
 }
 
+.history-loading {
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--graphite);
+  font-size: 16px;
+  border-radius: var(--radius-xl);
+  background: var(--cloud);
+}
+
+.history-status {
+  margin: var(--spacing-xs) 0 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.history-status-info {
+  color: var(--graphite);
+}
+
+.history-status-success {
+  color: var(--primary);
+}
+
+.history-status-error {
+  color: var(--error);
+}
+
 .history-item {
   display: grid;
   gap: var(--spacing-sm);

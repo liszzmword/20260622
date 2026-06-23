@@ -224,7 +224,8 @@
         <div class="section-heading section-heading-row">
           <div>
             <h2>추첨 기록</h2>
-            <p>이번 세션에서 생성한 번호 목록입니다.</p>
+            <p>Supabase에 저장된 추첨 번호 목록입니다.</p>
+            <p class="history-status history-status-info" id="historyStatus">Supabase 연결 중...</p>
           </div>
           <button type="button" class="btn-outline-ink btn-clear" id="clearBtn">기록 지우기</button>
         </div>
@@ -243,6 +244,7 @@
     </div>
   </footer>
 
+  <script src="lotto-storage.js"></script>
   <script src="script.js"></script>
   <script src="lotto-lookup.js"></script>
   <script src="saju-chat.js"></script>

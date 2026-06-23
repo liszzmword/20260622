@@ -235,9 +235,12 @@ function formatTime(date) {
   });
 }
 
-function renderHistoryItem(result, index, timestamp) {
+function renderHistoryItem(result, index, timestamp, options = {}) {
   const item = document.createElement("li");
   item.className = "history-item";
+  if (options.id) {
+    item.dataset.id = options.id;
+  }
 
   const meta = document.createElement("div");
   meta.className = "history-meta";
@@ -262,21 +265,94 @@ function renderHistoryItem(result, index, timestamp) {
   return item;
 }
 
-function addToHistory(results) {
-  const timestamp = new Date();
+function addToHistory(results, savedAt = new Date()) {
   const emptyState = historyList.querySelector(".history-empty");
+  const loadingState = historyList.querySelector(".history-loading");
 
   if (emptyState) {
     emptyState.remove();
+  }
+  if (loadingState) {
+    loadingState.remove();
   }
 
   const fragment = document.createDocumentFragment();
 
   results.forEach((result, index) => {
-    fragment.appendChild(renderHistoryItem(result, index + 1, timestamp));
+    fragment.appendChild(renderHistoryItem(result, index + 1, savedAt));
   });
 
   historyList.prepend(fragment);
+}
+
+function renderHistoryFromRows(rows) {
+  historyList.innerHTML = "";
+
+  if (!rows.length) {
+    historyList.innerHTML = '<li class="history-empty">아직 추첨한 번호가 없습니다.</li>';
+    return;
+  }
+
+  const batches = new Map();
+  rows.forEach((row) => {
+    if (!batches.has(row.batch_id)) {
+      batches.set(row.batch_id, []);
+    }
+    batches.get(row.batch_id).push(row);
+  });
+
+  const sortedBatches = [...batches.values()].sort((a, b) => {
+    const timeA = new Date(a[0].created_at).getTime();
+    const timeB = new Date(b[0].created_at).getTime();
+    return timeB - timeA;
+  });
+
+  sortedBatches.forEach((batchRows) => {
+    const sortedRows = batchRows.sort((a, b) => a.set_index - b.set_index);
+    const timestamp = new Date(sortedRows[0].created_at);
+
+    sortedRows.forEach((row) => {
+      historyList.appendChild(
+        renderHistoryItem(window.LottoStorage.rowToResult(row), row.set_index, timestamp, {
+          id: row.id,
+        })
+      );
+    });
+  });
+}
+
+function setHistoryStatus(message, type = "info") {
+  const statusEl = document.getElementById("historyStatus");
+  if (!statusEl) return;
+  statusEl.textContent = message;
+  statusEl.className = `history-status history-status-${type}`;
+}
+
+async function loadHistoryFromSupabase() {
+  historyList.innerHTML = '<li class="history-loading">Supabase에서 기록을 불러오는 중...</li>';
+  setHistoryStatus("Supabase 연결 중...", "info");
+
+  try {
+    const rows = await window.LottoStorage.fetchDrawHistory();
+    renderHistoryFromRows(rows);
+    setHistoryStatus(`Supabase에 ${rows.length}건 저장됨`, "success");
+  } catch (error) {
+    historyList.innerHTML = `<li class="history-empty">${error.message}</li>`;
+    setHistoryStatus("Supabase 연결 실패", "error");
+  }
+}
+
+async function saveHistoryToSupabase(results) {
+  setHistoryStatus("Supabase에 저장 중...", "info");
+
+  try {
+    await window.LottoStorage.saveDrawBatch(results);
+    setHistoryStatus("Supabase 저장 완료", "success");
+    await loadHistoryFromSupabase();
+  } catch (error) {
+    setHistoryStatus(error.message, "error");
+    addToHistory(results);
+  }
 }
 
 async function handleDraw() {
@@ -290,17 +366,30 @@ async function handleDraw() {
 
   resetDisplay();
   await animateDraw(results[0]);
-  addToHistory(results);
+  await saveHistoryToSupabase(results);
 
   isDrawing = false;
   drawBtn.disabled = false;
 }
 
-function handleClearHistory() {
-  historyList.innerHTML = '<li class="history-empty">아직 추첨한 번호가 없습니다.</li>';
+async function handleClearHistory() {
+  if (!confirm("Supabase에 저장된 추첨 기록을 모두 삭제할까요?")) {
+    return;
+  }
+
+  setHistoryStatus("기록 삭제 중...", "info");
+
+  try {
+    await window.LottoStorage.clearDrawHistory();
+    historyList.innerHTML = '<li class="history-empty">아직 추첨한 번호가 없습니다.</li>';
+    setHistoryStatus("기록 삭제 완료", "success");
+  } catch (error) {
+    setHistoryStatus(error.message, "error");
+  }
 }
 
 drawBtn.addEventListener("click", handleDraw);
 clearBtn.addEventListener("click", handleClearHistory);
 
 resetDisplay();
+loadHistoryFromSupabase();
