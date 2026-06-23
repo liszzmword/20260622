@@ -1,6 +1,8 @@
 function getSupabaseConfig() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_ANON_KEY;
 
   if (!url || !key) {
     return null;
@@ -9,12 +11,22 @@ function getSupabaseConfig() {
   return { url, key };
 }
 
+function parseError(data, fallback) {
+  if (!data) return fallback;
+  if (typeof data === "string") return data;
+  if (data.error) return data.error;
+  if (data.message) {
+    return data.details ? `${data.message} — ${data.details}` : data.message;
+  }
+  return fallback;
+}
+
 async function supabaseRequest(path, options = {}) {
   const config = getSupabaseConfig();
 
   if (!config) {
     throw new Error(
-      "Supabase가 설정되지 않았습니다. Vercel 환경 변수 SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY를 추가해 주세요."
+      "Supabase 환경 변수가 없습니다. SUPABASE_URL + SUPABASE_ANON_KEY(또는 SERVICE_ROLE_KEY)를 Vercel에 설정하세요."
     );
   }
 
@@ -29,11 +41,18 @@ async function supabaseRequest(path, options = {}) {
   });
 
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { message: text };
+    }
+  }
 
   if (!response.ok) {
-    const message = data?.message || data?.error || "Supabase 요청에 실패했습니다.";
-    throw new Error(message);
+    throw new Error(parseError(data, "Supabase 요청에 실패했습니다."));
   }
 
   return data;
@@ -110,7 +129,7 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "DELETE") {
-      await supabaseRequest("lotto_draws?id=neq.00000000-0000-0000-0000-000000000000", {
+      await supabaseRequest("lotto_draws?id=not.is.null", {
         method: "DELETE",
         headers: { Prefer: "return=minimal" },
       });

@@ -1094,6 +1094,13 @@ select.text-input {
   color: var(--error);
 }
 
+.history-help {
+  margin: var(--spacing-xs) 0 0;
+  color: var(--graphite);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .history-item {
   display: grid;
   gap: var(--spacing-sm);

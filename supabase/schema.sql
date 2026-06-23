@@ -1,4 +1,4 @@
--- Supabase SQL Editor에서 실행하세요.
+-- Supabase SQL Editor에서 전체 실행하세요.
 -- Table: lotto_draws (추첨 번호 저장)
 
 create table if not exists public.lotto_draws (
@@ -20,7 +20,6 @@ create index if not exists lotto_draws_batch_id_idx
 
 alter table public.lotto_draws enable row level security;
 
--- 데모용 공개 정책 (운영 시 인증 기반 정책으로 교체 권장)
 drop policy if exists "Allow public read" on public.lotto_draws;
 drop policy if exists "Allow public insert" on public.lotto_draws;
 drop policy if exists "Allow public delete" on public.lotto_draws;
@@ -36,3 +35,7 @@ create policy "Allow public insert"
 create policy "Allow public delete"
   on public.lotto_draws for delete
   using (true);
+
+-- API(anon/service_role) 접근 권한 (저장 실패 시 이 구문 누락 여부 확인)
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, delete on table public.lotto_draws to anon, authenticated, service_role;

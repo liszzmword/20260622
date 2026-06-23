@@ -330,15 +330,16 @@ function setHistoryStatus(message, type = "info") {
 
 async function loadHistoryFromSupabase() {
   historyList.innerHTML = '<li class="history-loading">Supabase에서 기록을 불러오는 중...</li>';
-  setHistoryStatus("Supabase 연결 중...", "info");
+  setHistoryStatus("Supabase 연결 확인 중...", "info");
 
   try {
+    await window.LottoStorage.checkConnection();
     const rows = await window.LottoStorage.fetchDrawHistory();
     renderHistoryFromRows(rows);
-    setHistoryStatus(`Supabase에 ${rows.length}건 저장됨`, "success");
+    setHistoryStatus(`Supabase 연결됨 · ${rows.length}건 저장됨`, "success");
   } catch (error) {
     historyList.innerHTML = `<li class="history-empty">${error.message}</li>`;
-    setHistoryStatus("Supabase 연결 실패", "error");
+    setHistoryStatus(error.message, "error");
   }
 }
 
@@ -346,11 +347,11 @@ async function saveHistoryToSupabase(results) {
   setHistoryStatus("Supabase에 저장 중...", "info");
 
   try {
-    await window.LottoStorage.saveDrawBatch(results);
-    setHistoryStatus("Supabase 저장 완료", "success");
+    const saved = await window.LottoStorage.saveDrawBatch(results);
+    setHistoryStatus(`Supabase 저장 완료 (${saved.length}세트)`, "success");
     await loadHistoryFromSupabase();
   } catch (error) {
-    setHistoryStatus(error.message, "error");
+    setHistoryStatus(`저장 실패: ${error.message}`, "error");
     addToHistory(results);
   }
 }
