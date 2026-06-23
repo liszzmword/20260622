@@ -1,5 +1,16 @@
+function normalizeSupabaseUrl(raw) {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  try {
+    const u = new URL(trimmed);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return trimmed.replace(/\/+$/, "");
+  }
+}
+
 function getSupabaseConfig() {
-  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const url = normalizeSupabaseUrl(process.env.SUPABASE_URL);
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = process.env.SUPABASE_ANON_KEY;
   const key = serviceRole || anonKey;

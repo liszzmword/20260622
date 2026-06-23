@@ -1,8 +1,19 @@
-const VERSION = "diag-v4";
+const VERSION = "diag-v5";
+
+function normalizeSupabaseUrl(raw) {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  try {
+    const u = new URL(trimmed);
+    return `${u.protocol}//${u.host}`;
+  } catch {
+    return trimmed.replace(/\/+$/, "");
+  }
+}
 
 export default async function handler(_req, res) {
   const rawUrl = process.env.SUPABASE_URL || "";
-  const url = rawUrl.replace(/\/$/, "");
+  const url = normalizeSupabaseUrl(rawUrl);
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = process.env.SUPABASE_ANON_KEY;
   const key = serviceRole || anonKey;
